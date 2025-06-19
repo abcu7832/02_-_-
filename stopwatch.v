@@ -9,8 +9,9 @@ module stopwatch (//top module
     output [7:0] fnd_data,
     output [3:0] fnd_com
 );
-    wire [$clog2(100)-1:0] w_low_fnd;
-    wire [$clog2(60)-1:0] w_high_fnd;
+    wire [$clog2(100)-1:0] w_msec;
+    wire [$clog2(60)-1:0] w_sec, w_min;
+    wire [$clog2(24)-1:0] w_hour;
     wire w_clear, w_runstop, w_mode;
     wire w_btnR, w_btnL;
 
@@ -19,10 +20,8 @@ module stopwatch (//top module
         .reset(reset),
         .i_clear(w_btnR),
         .i_runstop(w_btnL),
-        .sw(sw0),
         .o_clear(w_clear),
-        .o_runstop(w_runstop),
-        .o_mode(w_mode)
+        .o_runstop(w_runstop)
     );
 
     btn_device U_btnR(
@@ -44,16 +43,20 @@ module stopwatch (//top module
         .reset(reset),
         .run_stop(w_runstop),
         .clear(w_clear),
-        .mode(w_mode),
-        .low_fnd(w_low_fnd),
-        .high_fnd(w_high_fnd)
+        .msec(w_msec),
+        .sec(w_sec),
+        .min(w_min),
+        .hour(w_hour)
     );
 
     fnd_controller U_FND_CONTROLLER (
         .clk(clk),
-        .reset(reset),
-        .msec(w_low_fnd),
-        .sec(w_high_fnd),
+        .rst(reset),
+        .sw0(sw0),
+        .msec(w_msec),
+        .sec(w_sec),
+        .min(w_min),
+        .hour(w_hour),
         .fnd_data(fnd_data),
         .fnd_com(fnd_com)
     );

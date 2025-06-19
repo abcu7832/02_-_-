@@ -20,19 +20,19 @@ module tb_stopwatch();
     initial begin
         #0 clk = 0; reset = 1; btnR_Clear = 0; sw0 = 0; btnL_RunStop=0;
         #20 reset = 0; 
-        #1000000 btnL_RunStop=1;
-        #10 btnL_RunStop=0;//RUN
-        #1000000 btnL_RunStop = 1;
-        #10 btnL_RunStop = 0;//STOP
-        #10000000 btnR_Clear = 1;
-        #10 btnR_Clear = 0;//CLEAR
-        #1000000 btnR_Clear = 1;
-        #10 btnR_Clear = 0;//STOP
-        #1000000 btnL_RunStop = 1;
-        #10 btnL_RunStop = 0;//RUN
-        #1000000 sw0 = 1;
+        #10000000 btnL_RunStop=1;
+        #1000000 btnL_RunStop=0;//RUN
+        #10000000 btnL_RunStop = 1;
+        #1000000 btnL_RunStop = 0;//STOP
+        #100000000 btnR_Clear = 1;
+        #1000000 btnR_Clear = 0;//CLEAR
+        #100000000 btnR_Clear = 1;
+        #1000000 btnR_Clear = 0;//STOP
+        #100000000 btnL_RunStop = 1;
+        #1000000 btnL_RunStop = 0;//RUN
+        #100000000 sw0 = 1;
         #10000000 sw0 = 0;
-        #1000000
+        #1000000000
         $finish;
     end
 

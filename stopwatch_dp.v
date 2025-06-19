@@ -5,18 +5,12 @@ module stopwatch_dp (
     input        reset,
     input        run_stop,
     input        clear,
-    input        mode,
     output  [6:0] msec,
     output  [5:0] sec,
     output  [5:0] min,
     output  [4:0] hour
 );
     wire w_tick_100hz, w_msec_tick, w_sec_tick, w_min_tick, w_hour_tick;
-    wire [7:0] msec, min;
-    wire [6:0] sec, hour;
-
-    assign low_fnd = (mode)?min:msec;
-    assign high_fnd = (mode)?hour:sec;
 
     tick_gen U_tick_gen_10ms( // 10ms 생성
         .clk(clk & run_stop),
@@ -105,7 +99,7 @@ module time_counter #(
     // state register
     always @(posedge clk, posedge rst) begin
         if(rst) begin
-            count_reg <= 1'b0;// nonblock => f/f 사용할때 일반적으로 
+            count_reg <= 0;// nonblock => f/f 사용할때 일반적으로 
             o_tick_reg <= 1'b0;
         end else begin
             count_reg <= count_next; 

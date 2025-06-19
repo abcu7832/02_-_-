@@ -5,10 +5,8 @@ module stopwatch_cu(
     input  reset,
     input  i_clear,//BtnR
     input  i_runstop,//BtnL
-    input  sw,//sw[0]
     output o_clear,
-    output o_runstop,
-    output o_mode
+    output o_runstop
 );
     reg[1:0] state_reg, next_state;
 
@@ -18,7 +16,6 @@ module stopwatch_cu(
 
     assign o_clear = (state_reg == CLEAR)?1:0;
     assign o_runstop = (state_reg == RUN)?1:0;
-    assign o_mode = (sw)?1:0;
     
     always @(posedge clk, posedge reset) begin
         if(reset) begin state_reg <= STOP; end

@@ -15,8 +15,9 @@ module fnd_controller (
     wire [3:0] w_bcd, w_msec_1, w_msec_10, w_sec_1, w_sec_10;
     wire [3:0] w_min_1, w_min_10, w_hour_1, w_hour_10;
     wire [3:0] w_min_hour, w_msec_sec;
-    wire w_oclk, w_dp;
-    wire [1:0] fnd_sel;
+    wire w_oclk;
+    wire [3:0] w_dp;
+    wire [2:0] fnd_sel;
 
     comparator_500ms U_Comparator_500ms(
         .msec(msec),
@@ -25,19 +26,19 @@ module fnd_controller (
     );
     // fnd_sel 연결하기
     clk_devider U_CLK_Div (
-        .clk  (clk),
+        .clk(clk),
         .rst(rst),
         .o_clk(w_oclk)
     );
 
-    counter_4 U_Counter_4 (
+    counter_8 U_Counter_8 (
         .clk(w_oclk),
         .rst(rst),
-        .fnd_sel(fnd_sel)
+        .fnd_sel(fnd_sel)//3bit
     );
 
     decoder_2x4 U_Decoder_2x4 (
-        .fnd_sel(fnd_sel),
+        .fnd_sel(fnd_sel[1:0]),
         .fnd_com(fnd_com)
     );
 
@@ -74,14 +75,15 @@ module fnd_controller (
     );
 
     mux_2x1 U_MUX_2x1 (
-    .msec_sec(w_msec_sec),
-    .min_hour(w_min_hour),
-    .sel(sw0),
-    .bcd(w_bcd)
+        .msec_sec(w_msec_sec),
+        .min_hour(w_min_hour),
+        .sel(sw0),
+        .bcd(w_bcd)
     );
 
     mux_8x1 U_MUX_8x1_MIN_HOUR (
-        .sel({w_dp,fnd_sel}),
+        .sel(fnd_sel),
+        .dp(w_dp),
         .digit_1(w_min_1),
         .digit_10(w_msin_10),
         .digit_100(w_hour_1),
@@ -89,7 +91,8 @@ module fnd_controller (
         .bcd(w_min_hour)
     );
     mux_8x1 U_MUX_8x1_MSEC_SEC (
-        .sel({w_dp,fnd_sel}),
+        .sel(fnd_sel),
+        .dp(w_dp),
         .digit_1(w_msec_1),
         .digit_10(w_msec_10),
         .digit_100(w_sec_1),
@@ -107,16 +110,16 @@ endmodule
 module comparator_500ms (
     input [6:0] msec,
     input reset,
-    output reg dp
+    output reg [3:0] dp
 );
     always @(*) begin
         if(reset) begin
-            dp <= 1'b0; 
+            dp <= 4'h0; 
         end else begin
             if(msec>49) begin
-                dp <= 1'b1;    
+                dp <= 4'hf;    
             end else begin
-                dp <= 1'b0;
+                dp <= 4'he;
             end
         end
     end
@@ -128,12 +131,9 @@ module mux_2x1 (
     input sel,
     output [3:0] bcd
 );
-
     assign bcd = (sel) ? min_hour : msec_sec;
     
 endmodule
-
-
 
 //clk divider
 // ->1kHz
@@ -164,13 +164,13 @@ module clk_devider (
     end
 endmodule
 
-//4진 카운터
-module counter_4 (  // 1KHz->1msec, 1MHz->1usec, 1GHz->1nsec
+//8진 카운터
+module counter_8 (  // 1KHz->1msec, 1MHz->1usec, 1GHz->1nsec
     input clk, // 100MHz(system clk), 25MHZ(4로나눈) 그래도 너무 빠름. clk 줄이고 싶음 -> 분주(2번 들어올 때마다 바꿔주고 싶음(2분주기). / 반복행위는 곧 순차회로로), clk devider를 4진 카운터 앞에 한 번 설계 (reset은  devider와 카운터에 각각들어감.) =>12.5MHZ당 값이 증가하는 카운터로 change
     input rst,
-    output [1:0] fnd_sel
+    output [2:0] fnd_sel
 );
-    reg [1:0] r_counter;
+    reg [2:0] r_counter;
     assign fnd_sel = r_counter;
     //
     always @(posedge clk, posedge rst) begin
@@ -202,27 +202,23 @@ endmodule
 //mux는 입력과 출력의 비트수 동일함.
 module mux_8x1 (
     input  [2:0] sel,
+    input  [3:0] dp,
     input  [3:0] digit_1,
     input  [3:0] digit_10,
     input  [3:0] digit_100,
     input  [3:0] digit_1000,
-    output [3:0] bcd
+    output reg [3:0] bcd
 );
-
-    //always문 출력 내보낼 때 reg 타입
-
-    reg [3:0] r_bcd;
-    assign bcd = r_bcd;
 
     // 4:1 mux, always
     always @(*) begin
         case (sel)
-            3'b000: r_bcd = digit_1;
-            3'b001: r_bcd = digit_10;
-            3'b010: r_bcd = digit_100;
-            3'b011: r_bcd = digit_1000;
-            3'b110: r_bcd = 10;
-            default: r_bcd = 11;
+            3'b000: bcd = digit_1;
+            3'b001: bcd = digit_10;
+            3'b010: bcd = digit_100;
+            3'b011: bcd = digit_1000;
+            3'b110: bcd = dp;
+            default: bcd = 4'hf;
         endcase
     end
 
@@ -243,27 +239,23 @@ endmodule
 
 module bcd (
     input  [3:0] bcd,
-    output [7:0] fnd_data
+    output reg [7:0] fnd_data
 );
-
-    reg [7:0] r_fnd_data;
-
-    assign fnd_data = r_fnd_data;
 
     always @(bcd) begin
         case (bcd)
-            4'h00:   r_fnd_data = 8'hc0;
-            4'h01:   r_fnd_data = 8'hf9;
-            4'h02:   r_fnd_data = 8'ha4;
-            4'h03:   r_fnd_data = 8'hb0;
-            4'h04:   r_fnd_data = 8'h99;
-            4'h05:   r_fnd_data = 8'h92;
-            4'h06:   r_fnd_data = 8'h82;
-            4'h07:   r_fnd_data = 8'hf8;
-            4'h08:   r_fnd_data = 8'h80;
-            4'h09:   r_fnd_data = 8'h90;
-            4'h0A:   r_fnd_data = 8'h7f;
-            default: r_fnd_data = 8'hff;
+            4'h00:   fnd_data = 8'hc0;
+            4'h01:   fnd_data = 8'hf9;
+            4'h02:   fnd_data = 8'ha4;
+            4'h03:   fnd_data = 8'hb0;
+            4'h04:   fnd_data = 8'h99;
+            4'h05:   fnd_data = 8'h92;
+            4'h06:   fnd_data = 8'h82;
+            4'h07:   fnd_data = 8'hf8;
+            4'h08:   fnd_data = 8'h80;
+            4'h09:   fnd_data = 8'h90;
+            4'h0E:   fnd_data = 8'h7f;
+            default: fnd_data = 8'hff;
         endcase
     end
 

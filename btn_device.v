@@ -40,7 +40,7 @@ module btn_device (
     end
     
     // f/f shift 구조
-    always @(i_btn, q_reg) begin   
+    always @(i_btn, q_reg, r_clk) begin   
         q_next = {i_btn, q_reg[7:1]};
     end
 
