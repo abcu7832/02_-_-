@@ -1,13 +1,15 @@
+
 `timescale 1ns / 1ps
 
 module fnd_controller (
     input clk,
     input reset,
-    input [13:0] count_data,
+    input [6:0] msec,
+    input [5:0] sec,
     output [7:0] fnd_data,
     output [3:0] fnd_com
 );
-    wire [3:0] w_bcd, w_digit_1, w_digit_10, w_digit_100, w_digit_1000;
+    wire [3:0] w_bcd, w_msec_1, w_msec_10, w_sec_1, w_sec_10;
     wire w_oclk;
     wire [1:0] fnd_sel;
 
@@ -26,19 +28,22 @@ module fnd_controller (
         .fnd_sel(fnd_sel),
         .fnd_com(fnd_com)
     );
-    digit_splitter U_DS (
-        .count_data(count_data),
-        .digit_1(w_digit_1),
-        .digit_10(w_digit_10),
-        .digit_100(w_digit_100),
-        .digit_1000(w_digit_1000)
+    digit_splitter #(.BIT_WIDTH(7)) U_DS_MSEC (
+        .time_data(msec), 
+        .digit_1(w_msec_1),
+        .digit_10(w_msec_10)
+    );
+    digit_splitter #(.BIT_WIDTH(6)) U_DS_SEC (
+        .time_data(sec), 
+        .digit_1(w_sec_1),
+        .digit_10(w_sec_10)
     );
     mux_4x1 U_MUX_4x1 (
         .sel(fnd_sel),
-        .digit_1(w_digit_1),
-        .digit_10(w_digit_10),
-        .digit_100(w_digit_100),
-        .digit_1000(w_digit_1000),
+        .digit_1(w_msec_1),
+        .digit_10(w_msec_10),
+        .digit_100(w_sec_1),
+        .digit_1000(w_sec_10),
         .bcd(w_bcd)
     );
     bcd U_BCD (
@@ -46,6 +51,7 @@ module fnd_controller (
         .fnd_data(fnd_data)
     );
 endmodule
+
 // clk divider
 // 1khz
 module clk_div (
@@ -54,7 +60,7 @@ module clk_div (
     output o_clk
 );
     // clk 100_000_000, r_count = 100_000
-    //reg [16:0] r_counter;
+    // reg [16:0] r_counter;
     reg [$clog2(100_000)-1:0] r_counter;
     reg r_clk;
 
@@ -131,17 +137,13 @@ module mux_4x1 (
     end
 endmodule
 
-module digit_splitter (
-    input  [13:0] count_data,
+module digit_splitter #(parameter BIT_WIDTH = 7)(
+    input  [BIT_WIDTH-1:0] time_data,
     output [ 3:0] digit_1,
-    output [ 3:0] digit_10,
-    output [ 3:0] digit_100,
-    output [ 3:0] digit_1000
+    output [ 3:0] digit_10
 );
-    assign digit_1    = count_data % 10;
-    assign digit_10   = (count_data / 10) % 10;
-    assign digit_100  = (count_data / 100) % 10;
-    assign digit_1000 = (count_data / 1000) % 10;
+    assign digit_1    = time_data % 10;
+    assign digit_10   = (time_data / 10) % 10;
 
 endmodule
 
@@ -170,5 +172,5 @@ module bcd (
             default: r_fnd_data = 8'hff;
         endcase
     end
-
+// 0이면 on, 1이면 off임
 endmodule
