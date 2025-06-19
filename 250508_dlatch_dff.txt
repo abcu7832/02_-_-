@@ -1,0 +1,38 @@
+<순차논리회로> clk edge
+transition / register 
+(D f/f => d latch 두개)
+f/f은 clock///latch는 pulse
+
+gated d latch (high level d latch) 통과하는 구간이 high인 경우
+
+g d q
+0 0 유지  => register 값 저장
+0 1 유지  => register 값 저장
+1 0 0      => transition 동작 통과
+1 1 1      => transition 동작 통과
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        RS문제 => R,S가 00에서 11에서 00으로 다시 돌아올때 발진 =>error발생
+=> 개선: gated d latch
+
+D f/f: positive edge trigger / negative edge trigger
+
+d latch 사용처: 조합논리에서 값 저장 or 유지      ex) always문
+합성기가 d latch를 발생시키는 이유: 예외의 경우 처리x
+d latch를 없애기 위해서는? 조건문에서 예외의 경우 처리 default, else
+
+
+d f/f을 사용하면, 입력의 noise를 제거할 수 있다.
+d f/f의 단점: gate 개수 사용 많음(11)  latch(5)
+=> size 증가, 전력소모 증가(발열 증가), delay 증가
+
+meta stable 이란? 이도저도 아닌 상태(1(5V)도 0(0V)도 아닌 중간값(2~3V))
+언제 발생하는가? 입력변화와 clk edge가 동시에 발생할때
+특징: 시간이 지나면 안정화됨.
+
+setup time / hold time
+
+CDC(Cross Domain Clock)=>해결방법: synchronize 회로(f/f 여러개를 series로 연결)-동기식
+비동기식(f/f마다의 clk이 다를때)도 사용하긴 함.
+
+많으면 많을수록 meta stable 적게 발생, but 출력이 발생하기까지 propagation delay 증가
+
+
