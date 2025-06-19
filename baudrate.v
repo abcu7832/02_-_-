@@ -5,11 +5,8 @@ module baudrate (
     input  rst,
     output baud_tick
 );
-    // clk 100Mhz
     parameter BAUD = 9600;
     parameter BAUD_COUNT = 100_000_000 / (BAUD * 8);
-    // 최소 baud_rate x 8 => baud_rate tick을 공유하기 위해서서
-    // 권장 baud_rate x 16
 
     reg [$clog2(BAUD_COUNT) - 1:0] count_reg, count_next;// count_next => 피드백 용
     reg baud_tick_reg, baud_tick_next;

@@ -3,34 +3,56 @@
 module uart_controller (
     input        clk,
     input        rst,
-    input        btn_start,  //up button에 할당
-    input  [7:0] tx_din,
     input        rx,
-    //output [7:0] rx_data,
-    //output       rx_done,
-    //output       tx_done,
+    input        rx_pop,
+    input  [7:0] tx_push_data,
+    input        tx_push,
+    output [7:0] rx_pop_data,    
+    output       rx_empty,
+    output       rx_done,
+    output       tx_full,
+    output       tx_done,
+    output       tx_busy,
     output       tx
 );
-    wire w_baud_tick, w_btn_start;
-    wire w_tx_busy, w_tx_done;
-    wire [7:0] w_dout;
-    wire w_rx_done;
+    wire w_baud_tick;
+    wire [7:0] w_tx_data, w_rx_data, rx2tx_data;
+    wire w_rx_done, w_tx_busy, w_tx_done;
+    wire tx2rx, tx2uart, rx2tx;
 
+    assign pop_data = w_rx_data;
     assign rx_done = w_rx_done;
-
-    btn_device U_BTN_U (
+    assign tx_done = w_tx_done;
+    assign tx_busy = w_tx_busy;
+    
+    fifo U_TX_FIFO(
         .clk(clk),
         .rst(rst),
-        .i_btn(btn_start),
-        .o_btn(w_btn_start)
+        .wr(tx_push),
+        .rd(~w_tx_busy),
+        .w_Data(tx_push_data),
+        .full(tx_full), 
+        .empty(tx2uart),
+        .r_Data(w_tx_data)
     );
-    
+
+    fifo U_RX_FIFO(
+        .clk(clk),
+        .rst(rst),
+        .wr(w_rx_done),
+        .rd(rx_pop),
+        .w_Data(w_rx_data),
+        .full(),
+        .empty(rx_empty), 
+        .r_Data(rx_pop_data)
+    );
+
     uart_tx U_TX (
         .clk(clk),
         .rst(rst),
         .baud_tick(w_baud_tick),
-        .start(w_btn_start|w_rx_done),
-        .din(w_dout),
+        .start(w_rx_done),
+        .din(w_tx_data),
         .o_tx_done(w_tx_done),
         .o_tx_busy(w_tx_busy),
         .o_tx(tx)
@@ -41,7 +63,7 @@ module uart_controller (
         .rst(rst),
         .b_tick(w_baud_tick),
         .rx(rx),
-        .dout(w_dout),
+        .dout(w_rx_data),
         .rx_done(w_rx_done)
     );
 
@@ -50,5 +72,5 @@ module uart_controller (
         .rst(rst),
         .baud_tick(w_baud_tick)
     );
-
 endmodule
+
