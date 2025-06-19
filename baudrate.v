@@ -7,15 +7,17 @@ module baudrate (
 );
     // clk 100Mhz
     parameter BAUD = 9600;
-    parameter BAUD_COUNT = 100_000_000/BAUD;
-    reg [$clog2(BAUD_COUNT)-1:0] count_reg, count_next;
-    // count_next => 피드백 용
+    parameter BAUD_COUNT = 100_000_000 / (BAUD * 8);
+    // 최소 baud_rate x 8 => baud_rate tick을 공유하기 위해서서
+    // 권장 baud_rate x 16
+
+    reg [$clog2(BAUD_COUNT) - 1:0] count_reg, count_next;// count_next => 피드백 용
     reg baud_tick_reg, baud_tick_next;
 
     assign baud_tick = baud_tick_reg;
-    
+
     always @(posedge clk, posedge rst) begin
-        if(rst) begin
+        if (rst) begin
             count_reg <= 0;
             baud_tick_reg <= 1'b0;
         end else begin
@@ -26,9 +28,8 @@ module baudrate (
 
     always @(*) begin
         count_next = count_reg;
-        baud_tick_next = 1'b0; // baud_tick_reg여도 상관 없음
-
-        if(count_reg == BAUD_COUNT - 1) begin
+        baud_tick_next = 1'b0;
+        if (count_reg == BAUD_COUNT - 1) begin
             count_next = 0;
             baud_tick_next = 1'b1;
         end else begin
